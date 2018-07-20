@@ -1,0 +1,13 @@
+service_account_email=         "SERVICEACCOUNT@PROJECTID.iam.gserviceaccount.com"
+service_account_private_key=   "-----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----\n"
+service_account_scopes=        ["https://www.googleapis.com/auth/admin.directory.user"]
+admin_email=                   ""
+token_refresh_count=           1000
+frontend_port=                 8080
+backend_port=                  "http://127.0.0.1:8081"
+workloc_file=                  "testdata"
+empinfo_file=                  ""
+orginfo_file=                  ""
+test_string=                   ""
+print_status_every=            25
+debug_mode=                    false
