@@ -104,4 +104,4 @@ venv.bak/
 .mypy_cache/
 
 # ignore data files
-# app/data/
+app/data/
