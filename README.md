@@ -5,6 +5,7 @@ This code edits gsuite profiles to contain newest information about employees.
 It uses three csv files, name configurable in the `config.toml` file, and parses them into JSON. Then this data is fed into the Google Directory API.
 
 ## download go
+
 ```
 sudo apt-get upgrade && \
 sudo apt-get update && \
