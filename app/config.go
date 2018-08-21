@@ -20,6 +20,7 @@ type Config struct {
 	Test_String                 string
 	Print_Status_Every          int
 	Debug_Mode                  bool
+	Update_Single_Account       string
 }
 
 func (c *Config) Read() {

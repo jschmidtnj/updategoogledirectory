@@ -36,6 +36,7 @@ func apirequest() {
 	//fmt.Println(userList.NextPageToken)
 	totalcount := len(employeeinfodata)
 	var count = 0
+	var users_skipped = 0
 	var push_error_count = 0
 	var get_data_error_count = 0
 	var get_employee_data_error_count = 0
@@ -54,6 +55,7 @@ func apirequest() {
 		for _, user := range userList.Users {
 			start_time := time.Now()
 			count++
+			users_skipped++
 			if user.ExternalIds != nil {
 
 				var externalIdValue = ""
@@ -68,7 +70,14 @@ func apirequest() {
 					continue
 				}
 
-				//if externalIdValue == "00049571" { //           COMMENT THIS OUT
+				if getConfig.Update_Single_Account != "" {
+					if externalIdValue != getConfig.Update_Single_Account {
+						continue
+					}
+				} else {
+					users_skipped--
+				}
+
 				//fmt.Printf("%v\n\n", user)
 				//fmt.Printf("%v\n\n", user.CustomSchemas)
 				//fmt.Printf(externalId)
@@ -175,25 +184,24 @@ func apirequest() {
 				//get phone data
 				var PhonesDataArray []objx.Map
 				var phone objx.Map
-				/*
-					if user.Phones != nil {
-						PhonesDataArrayInterface := user.Phones.([]interface{})
-						//fmt.Println(len(RelationsDataArrayInterface))
-						//fmt.Printf("%v", RelationsDataArrayInterface)
-						for _, pho := range PhonesDataArrayInterface {
-							phone = objx.New(pho)
-							if phone["value"] != nil {
-								//fmt.Println("main phone " + phone["value"].(string))
-							}
-							PhonesDataArray = append(PhonesDataArray, phone)
+
+				if user.Phones != nil {
+					PhonesDataArrayInterface := user.Phones.([]interface{})
+					//fmt.Println(len(RelationsDataArrayInterface))
+					//fmt.Printf("%v", RelationsDataArrayInterface)
+					for _, pho := range PhonesDataArrayInterface {
+						phone = objx.New(pho)
+						if phone["value"] != nil {
+							//fmt.Println("main phone " + phone["value"].(string))
 						}
-					} else {
-						//fmt.Println("no phones")
-						phone = objx.MustFromJSON(`{}`) //{"value": "", "primary": false, "type": "", "customType": ""}
-						//fmt.Printf("%v", relation)
-						PhonesDataArray = append(PhonesDataArray, relation)
+						PhonesDataArray = append(PhonesDataArray, phone)
 					}
-				*/
+				} else {
+					//fmt.Println("no phones")
+					phone = objx.MustFromJSON(`{}`) //{"value": "", "primary": false, "type": "", "customType": ""}
+					//fmt.Printf("%v", relation)
+					PhonesDataArray = append(PhonesDataArray, relation)
+				}
 
 				var addressFormatted string
 				var addressExtended string
@@ -358,7 +366,7 @@ func apirequest() {
 				for _, manageruser := range ManagerUserList.Users {
 					if manageruser.ExternalIds != "" {
 						//fmt.Println("got manager " + manageruser.Name.FullName)
-						managers = append(managers, manageruser.Name.FullName)
+						managers = append(managers, manageruser.PrimaryEmail)
 					}
 				}
 				//fmt.Printf("manager data returned: %v", ManagerUserList.Users)
@@ -415,15 +423,7 @@ func apirequest() {
 				//change name data
 				//user.Name.GivenName = employee.Entry4
 				//user.Name.FullName = employee.Entry3
-				//break
-				//}
-				//}
-				//break
-				//}
-				//}
-				//break
-				//}
-				//}
+
 				//refresh address data
 				//address["postalCode"] = ""
 				//var updatedaddress interface{}
@@ -445,9 +445,7 @@ func apirequest() {
 				//user.Phones = PhonesDataArray
 
 				id := user.Id
-				//fmt.Printf("%v\n\nold\n\n", user)
 				user, err := directoryapiservice.Users.Update(id, user).Do()
-				//fmt.Printf("%v\n\nnew\n\n", user)
 				if err != nil {
 					push_error_count++
 					Log.Printf("problem with put request: %s %s. Current error count %s\n", err.Error(), strconv.Itoa(count), strconv.Itoa(push_error_count))
@@ -460,10 +458,12 @@ func apirequest() {
 				if organization["location"] != nil {
 					//fmt.Println("new address: " + organization["location"].(string))
 				}
-				//} //               COMMENT THIS OUT
+				if externalIdValue == getConfig.Update_Single_Account {
+					fmt.Printf("%v\n\nnew\n\n", user)
+					fmt.Printf("%s (%s)%s\n", user.PrimaryEmail, user.Name.FullName, user.Id)
+					fmt.Println(user.Emails)
+				}
 			}
-			//fmt.Printf("%s (%s)%s\n", user.PrimaryEmail, user.Name.FullName, user.Id)
-			//fmt.Println(user.Emails)
 
 			duration := time.Since(start_time)
 			durations = append(durations, duration)
@@ -471,7 +471,7 @@ func apirequest() {
 			sum += duration //sum milliseconds to value
 			avg := sum / time.Duration(len(durations))
 			time_left := avg * time.Duration((totalcount - count))
-			if count%getConfig.Print_Status_Every == 0 {
+			if count%getConfig.Print_Status_Every == 0 && getConfig.Update_Single_Account == "" {
 				fmt.Println("average time: " + durafmt.Parse(avg).String())
 				Log.Println("average time: " + durafmt.Parse(avg).String())
 				fmt.Printf("User # " + strconv.Itoa(count) + ". Time projected: " + durafmt.Parse(time_left).String() + ", Current Error count " + strconv.Itoa(push_error_count+get_data_error_count) + "\n")
@@ -485,8 +485,13 @@ func apirequest() {
 		t := time.Now()
 		nextPageToken = userList.NextPageToken
 		userList, err = getDirectoryUserList(directoryapiservice, nextPageToken)
-		fmt.Printf("Next page - users completed: " + strconv.Itoa(count) + ", errors: " + strconv.Itoa(push_error_count+get_data_error_count+get_managers_error_count) + ", " + strconv.FormatFloat(float64(count)/float64(totalcount)*100, 'f', 2, 64) + "%% complete, error rate: " + strconv.FormatFloat(float64(push_error_count+get_data_error_count+get_managers_error_count)/float64(count)*100, 'f', 2, 64) + "%%, " + string(t.Format("2006-01-02 15:04:05")) + "\n")
-		Log.Printf("Next page - users completed: " + strconv.Itoa(count) + ", errors: " + strconv.Itoa(push_error_count+get_data_error_count+get_managers_error_count) + ", " + strconv.FormatFloat(float64(count)/float64(totalcount)*100, 'f', 2, 64) + "%% complete, error rate: " + strconv.FormatFloat(float64(push_error_count+get_data_error_count+get_managers_error_count)/float64(count)*100, 'f', 2, 64) + "%%, " + string(t.Format("2006-01-02 15:04:05")) + "\n")
+		if getConfig.Update_Single_Account == "" {
+			fmt.Printf("Next page - users completed: " + strconv.Itoa(count) + ", errors: " + strconv.Itoa(push_error_count+get_data_error_count+get_managers_error_count) + ", " + strconv.FormatFloat(float64(count)/float64(totalcount)*100, 'f', 2, 64) + "%% complete, error rate: " + strconv.FormatFloat(float64(push_error_count+get_data_error_count+get_managers_error_count)/float64(count)*100, 'f', 2, 64) + "%%, " + string(t.Format("2006-01-02 15:04:05")) + "\n")
+			Log.Printf("Next page - users completed: " + strconv.Itoa(count) + ", errors: " + strconv.Itoa(push_error_count+get_data_error_count+get_managers_error_count) + ", " + strconv.FormatFloat(float64(count)/float64(totalcount)*100, 'f', 2, 64) + "%% complete, error rate: " + strconv.FormatFloat(float64(push_error_count+get_data_error_count+get_managers_error_count)/float64(count)*100, 'f', 2, 64) + "%%, " + string(t.Format("2006-01-02 15:04:05")) + "\n")
+		} else {
+			fmt.Println("Next page - Users skipped: " + strconv.Itoa(users_skipped))
+			Log.Println("Next page - Users skipped: " + strconv.Itoa(users_skipped))
+		}
 	}
 	t := time.Now()
 	var main_error string

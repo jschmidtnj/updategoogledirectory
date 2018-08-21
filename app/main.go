@@ -44,10 +44,10 @@ func runDirectoryUpdate() {
 	Log.Printf("Starting Directory Update, %s\n", t.Format("2006-01-02 15:04:05"))
 
 	if getConfig.Debug_Mode {
-		fmt.Println("\n\nDEBUG MODE ON\n\n\n")
+		fmt.Println("DEBUG MODE ON")
 		Log.Println("Debug Mode On")
 	} else {
-		fmt.Println("\n\nDEBUG MODE OFF\n\n\n")
+		fmt.Println("DEBUG MODE OFF")
 		Log.Println("Debug Mode Off")
 	}
 
