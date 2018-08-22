@@ -96,3 +96,27 @@ func quick_sort_employee(data []Employeeinfo) []Employeeinfo {
 		return array
 	}
 }
+
+func quick_sort_country(data []country) []country {
+	array := data
+	var less []country
+	var equal []country
+	var greater []country
+	if len(array) > 1 {
+		pivot := array[0].Alpha2code
+		for _, item := range array {
+			item_index := item.Alpha2code
+			if item_index < pivot {
+				less = append(less, item)
+			} else if item_index == pivot {
+				equal = append(equal, item)
+			} else {
+				greater = append(greater, item)
+			}
+		}
+		//join lists with +
+		return append(append(quick_sort_country(less), equal...), quick_sort_country(greater)...)
+	} else {
+		return array
+	}
+}

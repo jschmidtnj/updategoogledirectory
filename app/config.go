@@ -21,6 +21,10 @@ type Config struct {
 	Print_Status_Every          int
 	Debug_Mode                  bool
 	Update_Single_Account       string
+	Update_From_Num             int
+	Country_Data_Url            string
+	Country_Data_File           string
+	Country_Mode                bool
 }
 
 func (c *Config) Read() {

@@ -55,6 +55,9 @@ func runDirectoryUpdate() {
 	getJsonData()
 	//getDataCsv() //alternative using the csv file directly, without conversion to json
 
+	//get country code data
+	getCountryData()
+
 	//then configure the data to be useable
 	configuredata()
 

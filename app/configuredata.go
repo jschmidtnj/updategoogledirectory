@@ -13,4 +13,5 @@ func configuredata() {
 	//fmt.Println(employeeinfodata[0].Entry2)
 	fmt.Println("csv files sorted")
 	Log.Println("csv files sorted")
+	countrydata = quick_sort_country(countrydata)
 }
